@@ -5,7 +5,9 @@ import LifestyleScreen from './screens/LifestyleScreen'
 import PlanScreen from './screens/PlanScreen'
 import TabBar from './components/TabBar'
 import ShareSheet from './components/ShareSheet'
+import InstallSheet from './components/InstallSheet'
 import { useReportState } from './state/useReportState'
+import { useInstallPrompt } from './state/useInstallPrompt'
 import { colors } from './theme/tokens'
 
 const TAB_TITLES = {
@@ -18,6 +20,7 @@ const TAB_TITLES = {
 
 function App() {
   const state = useReportState()
+  const install = useInstallPrompt()
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', background: colors.appBg }}>
@@ -43,7 +46,14 @@ function App() {
         </div>
 
         <div style={{ flex: 1, padding: '0 20px 28px' }}>
-          {state.tab === 'home' && <HomeScreen onNavigate={state.setTab} onOpenShare={state.openShare} />}
+          {state.tab === 'home' && (
+            <HomeScreen
+              onNavigate={state.setTab}
+              onOpenShare={state.openShare}
+              canInstall={install.canOfferInstall}
+              onInstall={install.promptInstall}
+            />
+          )}
           {state.tab === 'risks' && <RisksScreen state={state} />}
           {state.tab === 'meds' && <MedsScreen state={state} />}
           {state.tab === 'lifestyle' && <LifestyleScreen />}
@@ -58,6 +68,8 @@ function App() {
           onClose={state.closeShare}
           onConfirm={state.confirmShare}
         />
+
+        <InstallSheet open={install.iosInstructionsOpen} onClose={install.closeIosInstructions} />
       </div>
     </div>
   )
