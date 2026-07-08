@@ -5,6 +5,8 @@ import type { TabId } from '../components/TabBar'
 interface HomeScreenProps {
   onNavigate: (tab: TabId) => void
   onOpenShare: () => void
+  canInstall: boolean
+  onInstall: () => void
 }
 
 interface SummaryRowProps {
@@ -42,7 +44,7 @@ function SummaryRow({ title, meta, count, countColor, onClick }: SummaryRowProps
   )
 }
 
-export default function HomeScreen({ onNavigate, onOpenShare }: HomeScreenProps) {
+export default function HomeScreen({ onNavigate, onOpenShare, canInstall, onInstall }: HomeScreenProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div
@@ -137,6 +139,31 @@ export default function HomeScreen({ onNavigate, onOpenShare }: HomeScreenProps)
         </div>
         <div style={{ fontSize: 20, color: ACCENT }}>⇪</div>
       </div>
+
+      {canInstall && (
+        <div
+          onClick={onInstall}
+          style={{
+            cursor: 'pointer',
+            borderRadius: 18,
+            padding: '16px 18px',
+            background: colors.cardBg,
+            border: `1px solid ${colors.cardBorder}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary }}>Install App</div>
+            <div style={{ fontSize: 12.5, color: colors.textMeta }}>
+              Add to your home screen for quick, full-screen access
+            </div>
+          </div>
+          <div style={{ fontSize: 20, color: ACCENT }}>⇩</div>
+        </div>
+      )}
     </div>
   )
 }
