@@ -1,6 +1,7 @@
 import Chip from '../components/Chip'
 import SectionHeader from '../components/SectionHeader'
-import { limitations, urgentScreenings, type FreqGroup } from '../data/reportData'
+import { useReportData } from '../state/ReportDataContext'
+import type { FreqGroup } from '../data/reportData'
 import type { ReportState } from '../state/useReportState'
 import { ACCENT, ACCENT_ON, TONE, colors } from '../theme/tokens'
 
@@ -16,18 +17,23 @@ const FREQ_DEFS: { id: 'all' | FreqGroup; label: string }[] = [
 ]
 
 export default function PlanScreen({ state }: PlanScreenProps) {
+  const { data } = useReportData()
+  const { limitations, urgentScreenings } = data
   const visible =
     state.screeningFreq === 'all'
       ? urgentScreenings
       : urgentScreenings.filter((s) => s.freqGroup === state.screeningFreq)
 
+  const linkedGenes = [...new Set(urgentScreenings.map((s) => s.linked.split(' — ')[0]))]
+  const screeningSubtitle =
+    linkedGenes.length > 0
+      ? `Driven by the ${linkedGenes.join(' and ')} findings.`
+      : 'Driven by your health-risk findings.'
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <SectionHeader
-          title="Priority Screening"
-          subtitle="Driven by the Lynch syndrome and Long QT findings."
-        />
+        <SectionHeader title="Priority Screening" subtitle={screeningSubtitle} />
 
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
           {FREQ_DEFS.map((f) => (

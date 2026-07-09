@@ -1,82 +1,26 @@
-import type { Tone } from '../theme/tokens'
+import type {
+  MonogenicItem,
+  PolygenicItem,
+  CarrierItem,
+  SecondaryItem,
+  PgxCategory,
+  LifestyleItem,
+  ScreeningItem,
+  ReportData,
+} from './reportSchema'
 
-export interface MonogenicItem {
-  id: string
-  gene: string
-  variant: string
-  condition: string
-  sub: string
-  classification: string
-  result: string
-  tone: Tone
-  plain: string
-}
-
-export interface PolygenicItem {
-  id: string
-  condition: string
-  percentile: number
-  category: string
-  tone: Tone
-  lifetime: string
-  plain: string
-}
-
-export interface CarrierItem {
-  id: string
-  gene: string
-  condition: string
-  status: string
-  tone: Tone
-  note: string
-}
-
-export interface SecondaryItem {
-  id: string
-  gene: string
-  condition: string
-  sub: string
-  classification: string
-  result: string
-  tone: Tone
-  plain: string
-  recommendation: string
-}
-
-export interface PgxDrug {
-  id: string
-  gene: string
-  phenotype: string
-  tone: Tone
-  drug: string
-  rec: string
-}
-
-export interface PgxCategory {
-  id: string
-  name: string
-  drugs: PgxDrug[]
-}
-
-export interface LifestyleItem {
-  id: string
-  trait: string
-  result: string
-  tone: Tone
-  interpretation: string
-}
-
-export type FreqGroup = 'annual' | 'periodic' | 'onetime'
-
-export interface ScreeningItem {
-  id: string
-  test: string
-  frequency: string
-  startingAge: string
-  linked: string
-  due: string
-  freqGroup: FreqGroup
-}
+export type {
+  MonogenicItem,
+  PolygenicItem,
+  CarrierItem,
+  SecondaryItem,
+  PgxDrug,
+  PgxCategory,
+  LifestyleItem,
+  FreqGroup,
+  ScreeningItem,
+  ReportData,
+} from './reportSchema'
 
 export const METABOLIZER_DEFS: Record<string, { abbr: string; def: string }> = {
   'Poor Metabolizer': {
@@ -280,3 +224,16 @@ export const limitations: string[] = [
   'A negative result reduces but does not eliminate risk; family history remains clinically relevant.',
   'Environmental and lifestyle factors significantly influence whether genetic risk translates into disease.',
 ]
+
+export const defaultReportData: ReportData = {
+  schemaVersion: 1,
+  patient: { name: 'Jane A. Sample' },
+  monogenic,
+  polygenic,
+  carrier,
+  secondary,
+  pgxCategories,
+  lifestyle,
+  urgentScreenings,
+  limitations,
+}

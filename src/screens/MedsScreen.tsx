@@ -3,7 +3,8 @@ import Badge from '../components/Badge'
 import Card from '../components/Card'
 import Chip from '../components/Chip'
 import ExpandToggle from '../components/ExpandToggle'
-import { METABOLIZER_DEFS, pgxCategories } from '../data/reportData'
+import { METABOLIZER_DEFS } from '../data/reportData'
+import { useReportData } from '../state/ReportDataContext'
 import type { ReportState } from '../state/useReportState'
 import { colors } from '../theme/tokens'
 
@@ -12,6 +13,8 @@ interface MedsScreenProps {
 }
 
 export default function MedsScreen({ state }: MedsScreenProps) {
+  const { data } = useReportData()
+  const { pgxCategories } = data
   const searchQuery = state.searchQuery.trim().toLowerCase()
 
   const visibleCategories = useMemo(() => {
@@ -25,7 +28,7 @@ export default function MedsScreen({ state }: MedsScreenProps) {
       .filter((c) => state.medFilter === 'all' || c.id === state.medFilter)
       .map((c) => ({ ...c, drugs: c.drugs.filter(matchesSearch) }))
       .filter((c) => c.drugs.length > 0)
-  }, [searchQuery, state.medFilter])
+  }, [pgxCategories, searchQuery, state.medFilter])
 
   const noMedsResults = visibleCategories.length === 0
 
