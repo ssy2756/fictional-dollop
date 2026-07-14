@@ -8,7 +8,7 @@ interface UploadSheetProps {
 }
 
 export default function UploadSheet({ open, onClose }: UploadSheetProps) {
-  const { status, errorMessage, upload, reset } = useUploadReport()
+  const { status, errorMessage, resultUid, isNewUid, upload, reset } = useUploadReport()
   const inputRef = useRef<HTMLInputElement>(null)
 
   if (!open) return null
@@ -92,6 +92,38 @@ export default function UploadSheet({ open, onClose }: UploadSheetProps) {
             >
               ✓ Report parsed and loaded
             </div>
+            {isNewUid && resultUid && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  alignItems: 'center',
+                  padding: 14,
+                  borderRadius: 14,
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.cardBorder}`,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Your access code
+                </div>
+                <div
+                  style={{
+                    fontSize: 24,
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    color: colors.textPrimary,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                >
+                  {resultUid}
+                </div>
+                <div style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
+                  Save this — you'll need it to view this report again.
+                </div>
+              </div>
+            )}
             <div
               onClick={close}
               style={{
@@ -111,8 +143,8 @@ export default function UploadSheet({ open, onClose }: UploadSheetProps) {
         ) : (
           <>
             <div style={{ fontSize: 13, lineHeight: 1.5, color: 'oklch(0.68 0.012 265)' }}>
-              Upload a PDF genetic test report — we'll extract it into the same view you're using now. This can take
-              up to a minute. Max file size 4MB.
+              Upload a PDF genetic test report — we'll extract it and give you an access code to view it. This can
+              take up to a minute. Max file size 4MB.
             </div>
 
             {status === 'error' && errorMessage && (

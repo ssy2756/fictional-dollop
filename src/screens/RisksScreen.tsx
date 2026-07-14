@@ -2,7 +2,7 @@ import Badge from '../components/Badge'
 import Card from '../components/Card'
 import ExpandToggle from '../components/ExpandToggle'
 import SectionHeader from '../components/SectionHeader'
-import { useReportData } from '../state/ReportDataContext'
+import { useActiveReport } from '../state/ReportDataContext'
 import type { ReportState } from '../state/useReportState'
 import { TONE, colors } from '../theme/tokens'
 
@@ -11,7 +11,7 @@ interface RisksScreenProps {
 }
 
 export default function RisksScreen({ state }: RisksScreenProps) {
-  const { data } = useReportData()
+  const { data } = useActiveReport()
   const { monogenic, polygenic, carrier, secondary } = data
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>

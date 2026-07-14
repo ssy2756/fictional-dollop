@@ -1,11 +1,11 @@
 import Badge from '../components/Badge'
 import Card from '../components/Card'
 import SectionHeader from '../components/SectionHeader'
-import { useReportData } from '../state/ReportDataContext'
+import { useActiveReport } from '../state/ReportDataContext'
 import { colors } from '../theme/tokens'
 
 export default function LifestyleScreen() {
-  const { data } = useReportData()
+  const { data } = useActiveReport()
   const { lifestyle } = data
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

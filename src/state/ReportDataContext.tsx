@@ -1,53 +1,111 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import { defaultReportData } from '../data/reportData'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { ReportDataSchema, type ReportData } from '../data/reportSchema'
 
-const STORAGE_KEY = 'genetic-report-data-v1'
+const UID_STORAGE_KEY = 'genetic-report-uid'
 
-function loadStoredReportData(): ReportData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaultReportData
-    const parsed = ReportDataSchema.safeParse(JSON.parse(raw))
-    return parsed.success ? parsed.data : defaultReportData
-  } catch {
-    return defaultReportData
-  }
-}
+export type ReportStatus = 'idle' | 'loading' | 'error' | 'ready'
 
 interface ReportDataContextValue {
-  data: ReportData
-  isDefault: boolean
-  setData: (data: ReportData) => void
-  resetToDefault: () => void
+  uid: string | null
+  data: ReportData | null
+  status: ReportStatus
+  errorMessage: string | null
+  loadUid: (uid: string) => Promise<void>
+  setData: (data: ReportData, uid: string) => void
+  logout: () => void
 }
 
 const ReportDataContext = createContext<ReportDataContextValue | null>(null)
 
-export function ReportDataProvider({ children }: { children: ReactNode }) {
-  const [data, setDataState] = useState<ReportData>(() => loadStoredReportData())
+function readStoredUid(): string | null {
+  try {
+    return localStorage.getItem(UID_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
 
-  const setData = useCallback((next: ReportData) => {
-    setDataState(next)
+function persistUid(uid: string | null) {
+  try {
+    if (uid) localStorage.setItem(UID_STORAGE_KEY, uid)
+    else localStorage.removeItem(UID_STORAGE_KEY)
+  } catch {
+    // localStorage unavailable (private browsing, quota) — session still works in memory
+  }
+}
+
+async function fetchReport(uid: string): Promise<ReportData> {
+  const res = await fetch(`/api/report/${encodeURIComponent(uid)}`)
+  const body: unknown = await res.json()
+  if (!res.ok) {
+    const message =
+      body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
+        ? body.error
+        : 'Failed to load report.'
+    throw new Error(message)
+  }
+  const parsed = ReportDataSchema.safeParse(body)
+  if (!parsed.success) throw new Error('The stored report did not match the expected format.')
+  return parsed.data
+}
+
+export function ReportDataProvider({ children }: { children: ReactNode }) {
+  const [uid, setUid] = useState<string | null>(null)
+  const [data, setDataState] = useState<ReportData | null>(null)
+  const [status, setStatus] = useState<ReportStatus>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const loadUid = useCallback(async (rawUid: string) => {
+    const nextUid = rawUid.trim().toUpperCase()
+    if (!nextUid) return
+    setStatus('loading')
+    setErrorMessage(null)
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    } catch {
-      // localStorage unavailable (private browsing, quota) — data still updates in memory
+      const report = await fetchReport(nextUid)
+      setUid(nextUid)
+      setDataState(report)
+      setStatus('ready')
+      persistUid(nextUid)
+    } catch (err) {
+      setStatus('error')
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to load report.')
     }
   }, [])
 
-  const resetToDefault = useCallback(() => {
-    setDataState(defaultReportData)
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // ignore
-    }
+  useEffect(() => {
+    const stored = readStoredUid()
+    if (stored) void loadUid(stored)
+    // Only ever run on mount — loadUid is stable (empty dep array) so this isn't stale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const setData = useCallback((next: ReportData, nextUid: string) => {
+    setUid(nextUid)
+    setDataState(next)
+    setStatus('ready')
+    setErrorMessage(null)
+    persistUid(nextUid)
+  }, [])
+
+  const logout = useCallback(() => {
+    setUid(null)
+    setDataState(null)
+    setStatus('idle')
+    setErrorMessage(null)
+    persistUid(null)
   }, [])
 
   const value = useMemo(
-    () => ({ data, isDefault: data === defaultReportData, setData, resetToDefault }),
-    [data, setData, resetToDefault],
+    () => ({ uid, data, status, errorMessage, loadUid, setData, logout }),
+    [uid, data, status, errorMessage, loadUid, setData, logout],
   )
 
   return <ReportDataContext.Provider value={value}>{children}</ReportDataContext.Provider>
@@ -57,4 +115,16 @@ export function useReportData(): ReportDataContextValue {
   const ctx = useContext(ReportDataContext)
   if (!ctx) throw new Error('useReportData must be used within a ReportDataProvider')
   return ctx
+}
+
+/**
+ * For the tab screens, which only ever mount once a report is loaded (App.tsx gates on
+ * status === 'ready'). Avoids every screen having to deal with a possibly-null report.
+ */
+export function useActiveReport(): { uid: string; data: ReportData; setData: (data: ReportData, uid: string) => void; logout: () => void } {
+  const ctx = useReportData()
+  if (!ctx.data || !ctx.uid) {
+    throw new Error('useActiveReport called before a report was loaded')
+  }
+  return { uid: ctx.uid, data: ctx.data, setData: ctx.setData, logout: ctx.logout }
 }

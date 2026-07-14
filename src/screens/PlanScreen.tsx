@@ -1,6 +1,6 @@
 import Chip from '../components/Chip'
 import SectionHeader from '../components/SectionHeader'
-import { useReportData } from '../state/ReportDataContext'
+import { useActiveReport } from '../state/ReportDataContext'
 import type { FreqGroup } from '../data/reportData'
 import type { ReportState } from '../state/useReportState'
 import { ACCENT, ACCENT_ON, TONE, colors } from '../theme/tokens'
@@ -17,7 +17,7 @@ const FREQ_DEFS: { id: 'all' | FreqGroup; label: string }[] = [
 ]
 
 export default function PlanScreen({ state }: PlanScreenProps) {
-  const { data } = useReportData()
+  const { data } = useActiveReport()
   const { limitations, urgentScreenings } = data
   const visible =
     state.screeningFreq === 'all'

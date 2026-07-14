@@ -4,7 +4,7 @@ import Card from '../components/Card'
 import Chip from '../components/Chip'
 import ExpandToggle from '../components/ExpandToggle'
 import { METABOLIZER_DEFS } from '../data/reportData'
-import { useReportData } from '../state/ReportDataContext'
+import { useActiveReport } from '../state/ReportDataContext'
 import type { ReportState } from '../state/useReportState'
 import { colors } from '../theme/tokens'
 
@@ -13,7 +13,7 @@ interface MedsScreenProps {
 }
 
 export default function MedsScreen({ state }: MedsScreenProps) {
-  const { data } = useReportData()
+  const { data } = useActiveReport()
   const { pgxCategories } = data
   const searchQuery = state.searchQuery.trim().toLowerCase()
 

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ReportDataSchema } from '../data/reportSchema'
+import { ReportDataSchema, type ReportData } from '../data/reportSchema'
 import { useReportData } from './ReportDataContext'
 
 export type UploadStatus = 'idle' | 'uploading' | 'error' | 'success'
@@ -19,14 +19,23 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
+interface ParseReportResponse {
+  uid: string
+  data: ReportData
+}
+
 export function useUploadReport() {
-  const { setData } = useReportData()
+  const { uid: currentUid, setData } = useReportData()
   const [status, setStatus] = useState<UploadStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [resultUid, setResultUid] = useState<string | null>(null)
+  const [isNewUid, setIsNewUid] = useState(false)
 
   const reset = useCallback(() => {
     setStatus('idle')
     setErrorMessage(null)
+    setResultUid(null)
+    setIsNewUid(false)
   }, [])
 
   const upload = useCallback(
@@ -50,7 +59,7 @@ export function useUploadReport() {
         const res = await fetch('/api/parse-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdfBase64 }),
+          body: JSON.stringify({ pdfBase64, uid: currentUid ?? undefined }),
         })
 
         const body: unknown = await res.json()
@@ -65,22 +74,27 @@ export function useUploadReport() {
           return
         }
 
-        const parsed = ReportDataSchema.safeParse(body)
-        if (!parsed.success) {
+        const uidCandidate = body && typeof body === 'object' && 'uid' in body ? body.uid : null
+        const dataCandidate = body && typeof body === 'object' && 'data' in body ? body.data : null
+        const parsed = ReportDataSchema.safeParse(dataCandidate)
+        if (!parsed.success || typeof uidCandidate !== 'string') {
           setStatus('error')
           setErrorMessage('The parsed report did not match the expected format.')
           return
         }
 
-        setData(parsed.data)
+        const response: ParseReportResponse = { uid: uidCandidate, data: parsed.data }
+        setResultUid(response.uid)
+        setIsNewUid(response.uid !== currentUid)
+        setData(response.data, response.uid)
         setStatus('success')
       } catch {
         setStatus('error')
         setErrorMessage('Network error — could not reach the server.')
       }
     },
-    [setData],
+    [currentUid, setData],
   )
 
-  return { status, errorMessage, upload, reset }
+  return { status, errorMessage, resultUid, isNewUid, upload, reset }
 }

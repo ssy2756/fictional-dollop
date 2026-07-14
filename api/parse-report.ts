@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { ReportDataSchema } from '../src/data/reportSchema.js'
+import { insertReport, upsertReport } from './_lib/db.js'
 
 export const config = {
   api: {
@@ -43,11 +44,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const { pdfBase64 } = (req.body ?? {}) as { pdfBase64?: unknown }
+  const { pdfBase64, uid: rawUid } = (req.body ?? {}) as { pdfBase64?: unknown; uid?: unknown }
   if (typeof pdfBase64 !== 'string' || pdfBase64.length === 0) {
     res.status(400).json({ error: 'Missing pdfBase64 in request body' })
     return
   }
+  const uid = typeof rawUid === 'string' && rawUid.trim() ? rawUid.trim().toUpperCase() : null
 
   const client = new Anthropic()
 
@@ -80,7 +82,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    res.status(200).json(response.parsed_output)
+    if (uid) {
+      await upsertReport(uid, response.parsed_output)
+      res.status(200).json({ uid, data: response.parsed_output })
+      return
+    }
+
+    const newUid = await insertReport(response.parsed_output)
+    res.status(201).json({ uid: newUid, data: response.parsed_output })
   } catch (err) {
     console.error('parse-report failed', err)
     res.status(500).json({ error: 'Failed to parse report.' })

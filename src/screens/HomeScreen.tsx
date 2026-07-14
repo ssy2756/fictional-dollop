@@ -1,6 +1,6 @@
 import { ACCENT, ACCENT_SOFT, ACCENT_SOFT_2, colors } from '../theme/tokens'
 import { computeCounts } from '../utils/counts'
-import { useReportData } from '../state/ReportDataContext'
+import { useActiveReport } from '../state/ReportDataContext'
 import type { TabId } from '../components/TabBar'
 
 interface HomeScreenProps {
@@ -79,7 +79,7 @@ function ActionRow({ title, meta, icon, onClick }: ActionRowProps) {
 }
 
 export default function HomeScreen({ onNavigate, onOpenShare, onOpenUpload, canInstall, onInstall }: HomeScreenProps) {
-  const { data } = useReportData()
+  const { data } = useActiveReport()
   const counts = computeCounts(data)
 
   const attentionItems = [...data.monogenic, ...data.secondary].filter(

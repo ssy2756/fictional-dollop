@@ -7,7 +7,7 @@ import type {
   LifestyleItem,
   ScreeningItem,
   ReportData,
-} from './reportSchema'
+} from './reportSchema.js'
 
 export type {
   MonogenicItem,
@@ -20,7 +20,7 @@ export type {
   FreqGroup,
   ScreeningItem,
   ReportData,
-} from './reportSchema'
+} from './reportSchema.js'
 
 export const METABOLIZER_DEFS: Record<string, { abbr: string; def: string }> = {
   'Poor Metabolizer': {
