@@ -1,6 +1,12 @@
 import { randomInt } from 'node:crypto'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 import type { ReportData } from '../../src/data/reportSchema.js'
+
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not set — connect a Postgres database to this project.')
+}
+const sql = neon(connectionString, { fullResults: true })
 
 // Excludes visually ambiguous characters (0/O, 1/I/L) so codes are easy to read and type back.
 const UID_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -19,8 +25,9 @@ function isUniqueViolation(err: unknown): boolean {
 }
 
 export async function getReportByUid(uid: string): Promise<ReportData | null> {
-  const { rows } = await sql<{ data: ReportData }>`SELECT data FROM reports WHERE uid = ${uid}`
-  return rows[0]?.data ?? null
+  const { rows } = await sql`SELECT data FROM reports WHERE uid = ${uid}`
+  const row = rows[0] as { data: ReportData } | undefined
+  return row?.data ?? null
 }
 
 /** Inserts a new report under a freshly generated UID, retrying on the rare collision. Returns the UID. */
